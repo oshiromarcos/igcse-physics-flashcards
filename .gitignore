@@ -20,7 +20,6 @@ src/data/all-test-cards.json
 src/data/all-cards-ibdp-backup.json
 formula-*.md
 targeted-card-fixes-*.md
-.github/workflows/deploy.yml
 scripts/apply-*.cjs
 scripts/fix-*.cjs
 scripts/repair-*.cjs
