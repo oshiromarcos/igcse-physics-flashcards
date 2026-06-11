@@ -23,10 +23,15 @@ const THEME_LABELS = {
   T6: "Topic 6 — Space Physics",
 };
 
+const COURSE_MODES = [
+  { value: "IGCSE", label: "IGCSE" },
+  { value: "EXTENDED", label: "Extended IGCSE" },
+];
+
 const LANGUAGE_MODES = [
   { value: "en", label: "English only" },
-  { value: "zh", label: "Chinese only" },
-  { value: "both", label: "English + Chinese" },
+  { value: "zh", label: "Chinese only", needsTranslations: true },
+  { value: "both", label: "English + Chinese", needsTranslations: true },
 ];
 
 const STORAGE_KEY = "igcse-physics-flashcards:study-progress:v1";
@@ -44,17 +49,26 @@ const DEFAULT_PROGRESS = {
   darkMode: false,
 };
 
+function isExtendedTierCard(card) {
+  return /Extended Tier Only/i.test(`${card.front || ""}\n${card.back || ""}`);
+}
+
+function cardTierLabel(card) {
+  return isExtendedTierCard(card) ? "Extended IGCSE" : "IGCSE";
+}
+
 const cards = rawCards.map((card, index) => ({
   ...card,
   id: card.id || `card-${index + 1}`,
-  levels: card.levels || ["IGCSE"],
+  levels: isExtendedTierCard(card) ? ["EXTENDED"] : ["IGCSE", "EXTENDED"],
   frontImages: card.frontImages || (card.frontImage ? [card.frontImage] : []),
   backImages: card.backImages || (card.backImage ? [card.backImage] : []),
   bookletFormulas: card.bookletFormulas || [],
 }));
 
 const cardIds = new Set(cards.map((card) => card.id));
-const topicCodes = new Set(cards.map((card) => card.topicCode));
+const topicCodes = new Set(cards.flatMap((card) => [card.topicCode, topicGroup(card.topicCode)]));
+const hasChineseTranslations = cards.some((card) => card.frontZh || card.backZh);
 
 const REVIEW_THEME = {
   accent: "#7c2d12",
@@ -277,8 +291,7 @@ function CardFace({ card, side, studyMode, isSaved, languageMode }) {
   const textSections = cardTextSections(card, side, languageMode);
   const hasImages = images.some(Boolean);
   const hasImageOcclusion = images.some((image) => String(image).includes("/occlusion/"));
-  const cardLevels = card.levels || ["IGCSE"];
-  const levelLabel = cardLevels.join(" + ");
+  const levelLabel = cardTierLabel(card);
 
   return (
     <div className={`cardFace ${isFront ? "cardFront" : "cardBack"} ${hasImages ? "hasImages" : ""} ${hasImageOcclusion ? "imageOcclusionFace" : ""}`}>
@@ -389,8 +402,12 @@ function loadStudyProgress() {
 
     return {
       ...DEFAULT_PROGRESS,
-      levelMode: stored?.levelMode === "IGCSE" ? "IGCSE" : DEFAULT_PROGRESS.levelMode,
-      languageMode: LANGUAGE_MODES.some((mode) => mode.value === stored?.languageMode)
+      levelMode: COURSE_MODES.some((mode) => mode.value === stored?.levelMode)
+        ? stored.levelMode
+        : DEFAULT_PROGRESS.levelMode,
+      languageMode: LANGUAGE_MODES.some((mode) => mode.value === stored?.languageMode) && (
+        stored?.languageMode === "en" || hasChineseTranslations
+      )
         ? stored.languageMode
         : DEFAULT_PROGRESS.languageMode,
       selectedSubtopic,
@@ -499,6 +516,10 @@ export default function App() {
 
     if (selectedSubtopic === "All topics") return availableCards;
 
+    if (/^T\d+$/.test(selectedSubtopic)) {
+      return availableCards.filter((card) => topicGroup(card.topicCode) === selectedSubtopic);
+    }
+
     return availableCards.filter((card) => card.topicCode === selectedSubtopic);
   }, [availableCards, reviewIds, selectedSubtopic, studyMode]);
 
@@ -513,7 +534,7 @@ export default function App() {
   const cardHasImageOcclusion = Boolean(
     card && [...card.frontImages, ...card.backImages].some((image) => String(image).includes("/occlusion/"))
   );
-  const selectedLevelLabel = "IGCSE";
+  const selectedLevelLabel = COURSE_MODES.find((mode) => mode.value === levelMode)?.label || "IGCSE";
 
   const displayTheme = darkMode
     ? {
@@ -1039,7 +1060,11 @@ export default function App() {
           <label>
             Course
             <select value={levelMode} onChange={changeLevel} disabled={studyMode === "review"}>
-              <option value="IGCSE">IGCSE</option>
+              {COURSE_MODES.map((mode) => (
+                <option value={mode.value} key={mode.value}>
+                  {mode.label}
+                </option>
+              ))}
             </select>
           </label>
 
@@ -1050,6 +1075,7 @@ export default function App() {
               {Object.entries(topicOptions).map(([group, items]) =>
                 items.length ? (
                   <optgroup label={THEME_LABELS[group] || group} key={group}>
+                    <option value={group}>{`All ${THEME_LABELS[group] || group}`}</option>
                     {items.map((item) => (
                       <option key={item.code} value={item.code}>
                         {item.label.startsWith(item.code)
@@ -1066,17 +1092,24 @@ export default function App() {
           <fieldset className="languageToggle" aria-label="Card language">
             <legend>Language</legend>
             <div className="languageOptions">
-              {LANGUAGE_MODES.map((mode) => (
-                <button
-                  type="button"
-                  key={mode.value}
-                  className={languageMode === mode.value ? "activeLanguage" : ""}
-                  aria-pressed={languageMode === mode.value}
-                  onClick={() => setLanguageMode(mode.value)}
-                >
-                  {mode.label}
-                </button>
-              ))}
+              {LANGUAGE_MODES.map((mode) => {
+                const isDisabled = mode.needsTranslations && !hasChineseTranslations;
+                return (
+                  <button
+                    type="button"
+                    key={mode.value}
+                    className={languageMode === mode.value ? "activeLanguage" : ""}
+                    aria-pressed={languageMode === mode.value}
+                    disabled={isDisabled}
+                    title={isDisabled ? "Chinese translations are not imported yet" : mode.label}
+                    onClick={() => {
+                      if (!isDisabled) setLanguageMode(mode.value);
+                    }}
+                  >
+                    {mode.label}
+                  </button>
+                );
+              })}
             </div>
           </fieldset>
 

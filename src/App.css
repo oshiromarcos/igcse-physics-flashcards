@@ -234,6 +234,12 @@ select:disabled {
   transform: translateY(-1px);
 }
 
+.languageOptions button:disabled {
+  opacity: 0.42;
+  cursor: not-allowed;
+  transform: none;
+}
+
 .languageOptions .activeLanguage {
   color: white;
   background: var(--accent);

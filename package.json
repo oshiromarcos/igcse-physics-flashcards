@@ -8,7 +8,8 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "audit:cards": "node scripts/audit-cards.cjs"
+    "audit:cards": "node scripts/audit-cards.cjs",
+    "audit:translations": "node scripts/audit-translations.cjs"
   },
   "dependencies": {
     "katex": "^0.16.45",
