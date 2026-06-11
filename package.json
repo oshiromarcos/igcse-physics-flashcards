@@ -9,7 +9,8 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "audit:cards": "node scripts/audit-cards.cjs",
-    "audit:translations": "node scripts/audit-translations.cjs"
+    "audit:translations": "node scripts/audit-translations.cjs",
+    "merge:translations": "node scripts/merge-translations.cjs"
   },
   "dependencies": {
     "katex": "^0.16.45",
