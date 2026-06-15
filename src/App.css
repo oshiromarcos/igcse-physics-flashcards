@@ -91,6 +91,13 @@ body {
   font-size: 17px;
 }
 
+.header .translationNotice {
+  margin-top: 8px;
+  font-size: 14px;
+  font-weight: 800;
+  color: #374151;
+}
+
 .darkShell .header p {
   color: #cbd5e1;
 }

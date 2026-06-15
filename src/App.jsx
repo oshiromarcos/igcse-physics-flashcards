@@ -37,6 +37,7 @@ const LANGUAGE_MODES = [
 const STORAGE_KEY = "igcse-physics-flashcards:study-progress:v1";
 const LEGACY_REVIEW_IDS_KEY = "igcse-physics-review-ids";
 const GITHUB_ISSUE_URL = "https://github.com/oshiromarcos/igcse-physics-flashcards/issues/new";
+const TRANSLATION_NOTICE = "中文翻译用于辅助学习，英文原文为准。";
 const DEFAULT_PROGRESS = {
   levelMode: "IGCSE",
   languageMode: "en",
@@ -1051,6 +1052,9 @@ export default function App() {
                 ? `Reviewing ${filteredCards.length} saved card(s)`
                 : `${selectedLevelLabel} · ${availableCards.length} available cards`}
             </p>
+            {hasChineseTranslations && (
+              <p className="translationNotice">{TRANSLATION_NOTICE}</p>
+            )}
           </div>
 
           <div className="stats">
