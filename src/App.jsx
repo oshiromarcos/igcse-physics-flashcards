@@ -77,7 +77,8 @@ const cards = rawCards.map((card, index) => ({
 const cardIds = new Set(cards.map((card) => card.id));
 const topicCodes = new Set(cards.flatMap((card) => [card.topicCode, topicGroup(card.topicCode)]));
 const reviewedChineseCount = cards.filter(hasReviewedChinese).length;
-const hasChineseTranslations = reviewedChineseCount > 0;
+const translatedChineseCount = cards.filter((card) => card.frontZh || card.backZh).length;
+const hasChineseTranslations = translatedChineseCount > 0;
 
 const REVIEW_THEME = {
   accent: "#7c2d12",
@@ -203,7 +204,7 @@ function RichText({ text }) {
 function cardTextSections(card, side, languageMode) {
   const isFront = side === "front";
   const english = isFront ? card.front : card.back;
-  const chinese = hasReviewedChinese(card) ? (isFront ? card.frontZh : card.backZh) : "";
+  const chinese = isFront ? card.frontZh : card.backZh;
 
   if (languageMode === "zh") {
     return [{ language: chinese ? "zh" : "en", text: chinese || english }];
@@ -1111,7 +1112,7 @@ export default function App() {
                     className={languageMode === mode.value ? "activeLanguage" : ""}
                     aria-pressed={languageMode === mode.value}
                     disabled={isDisabled}
-                    title={isDisabled ? "No reviewed Chinese translations are available yet" : mode.label}
+                    title={isDisabled ? "Chinese translations are not imported yet" : mode.label}
                     onClick={() => {
                       if (!isDisabled) setLanguageMode(mode.value);
                     }}
@@ -1125,7 +1126,8 @@ export default function App() {
 
           <span className="cardCounter">
             Card {safeIndex + 1} / {filteredCards.length}
-            {hasChineseTranslations ? ` · ${reviewedChineseCount} reviewed Chinese` : ""}
+            {hasChineseTranslations ? ` · ${translatedChineseCount} Chinese` : ""}
+            {reviewedChineseCount ? ` · ${reviewedChineseCount} reviewed` : ""}
           </span>
         </section>}
 
